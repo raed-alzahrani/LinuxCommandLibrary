@@ -1,0 +1,49 @@
+name: Build iOS IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java for KMP
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Build Shared Kotlin Framework
+        run: |
+          chmod +x gradlew
+          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+
+      - name: Build iOS App with Xcode
+        run: |
+          cd iosApp
+          xcodebuild build \
+            -scheme iosApp \
+            -destination 'generic/platform=iOS' \
+            -configuration Release \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            CONFIGURATION_BUILD_DIR=build
+
+      - name: Package into IPA
+        run: |
+          cd iosApp
+          mkdir -p Payload
+          cp -r build/iosApp.app Payload/
+          zip -r LinuxCommandLibrary.ipa Payload
+          rm -rf Payload
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: LinuxCommandLibrary-IPA
+          path: iosApp/LinuxCommandLibrary.ipa
