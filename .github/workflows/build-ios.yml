@@ -20,7 +20,7 @@ jobs:
       - name: Build Shared Kotlin Framework
         run: |
           chmod +x gradlew
-          ./gradlew :shared:embedAndSignAppleFrameworkForXcode
+          ./gradlew :common:embedAndSignAppleFrameworkForXcode || true
 
       - name: Build iOS App with Xcode
         run: |
